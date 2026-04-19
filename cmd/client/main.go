@@ -5,12 +5,14 @@ import (
 	"crypto/sha256"
 	"crypto/tls"
 	"fmt"
-	"github.com/quic-go/quic-go"
-	"github.com/so1icitx/qsend/internal/protocol"
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
+
+	"github.com/quic-go/quic-go"
+	"github.com/so1icitx/qsend/internal/protocol"
 )
 
 type NetworkMeasurement struct {
@@ -35,7 +37,7 @@ func main() {
 	*/
 
 	// sets up a connection with the endpoints via quic
-	quicConn, err := quic.DialAddr(context.Background(), "localhost:1447", &tlsConf, nil)
+	quicConn, err := quic.DialAddr(context.Background(), "159.65.121.63:1447", &tlsConf, nil)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -53,7 +55,7 @@ func main() {
 		return
 	}
 	header.Action = []rune(os.Args[1])[0]
-	header.FileName = os.Args[2]
+	header.FileName = filepath.Base(os.Args[2])
 	header.FileNameLen = uint8(len(header.FileName))
 	packetSize := 1 + 1 + header.FileNameLen + 32
 
@@ -74,7 +76,7 @@ func main() {
 
 	case 'U':
 		// opens an existing file
-		file, err := os.Open(header.FileName)
+		file, err := os.Open(os.Args[2])
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -158,7 +160,7 @@ func (m *NetworkMeasurement) Write(b []byte) (n int, err error) {
 func (m *NetworkMeasurement) HowFast() {
 	for {
 		time.Sleep(time.Second * 1)
-		fmt.Printf("\r%.2f mbp/s   ", float32(m.BytesRead)/1048576.0)
+		fmt.Printf("\r%.2f mbp/s         ", float32(m.BytesRead)/1048576.0)
 		m.BytesRead = 0
 	}
 }
